@@ -1,0 +1,92 @@
+/* Thiết lập font và nền chung */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Màu nền nhẹ nhàng: Light Blue-Grey */
+    background-color: #e9ecef; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Container chứa form Đăng nhập/Đăng ký */
+.auth-container {
+    background: white;
+    padding: 30px;
+    /* Bo góc mềm mại */
+    border-radius: 12px; 
+    /* Đổ bóng nhẹ */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 380px;
+    text-align: center;
+    /* Tăng cường độ rõ ràng */
+    border: 1px solid #dee2e6;
+}
+
+/* Định dạng Tiêu đề (Chào mừng) */
+#welcomeMessage h3 {
+    color: #343a40; 
+    font-size: 1.5em;
+    margin-bottom: 5px;
+}
+/* Định dạng Tiêu đề phụ */
+#welcomeMessage p {
+    margin: 0;
+}
+/* Đảm bảo chữ SmartWallet được in đậm */
+#welcomeMessage h3 b {
+    font-weight: bold;
+}
+
+
+/* Định dạng Input */
+input[type="email"], input[type="password"], input[type="text"] {
+    width: 90%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ced4da; 
+    border-radius: 6px; 
+    box-sizing: border-box; 
+    transition: border-color 0.3s;
+}
+
+input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focus {
+    border-color: #007bff; 
+    outline: none;
+}
+
+/* Định dạng Nút chính */
+button:not(.toggle-btn) {
+    background-color: #007bff; 
+    color: white;
+    padding: 12px 15px;
+    margin: 15px 0 10px 0;
+    border: none;
+    border-radius: 6px; 
+    cursor: pointer;
+    width: 100%;
+    font-size: 17px;
+    transition: background-color 0.3s;
+}
+
+button:hover:not(.toggle-btn) {
+    background-color: #0056b3;
+}
+
+/* Định dạng Nút chuyển đổi (toggle) */
+.toggle-btn {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: none; 
+    font-weight: 600;
+    padding: 0;
+    margin: 0;
+    font-size: inherit;
+}
+
+.toggle-btn:hover {
+    color: #0056b3; 
+}

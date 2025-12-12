@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Chi Tiêu - Đăng Nhập</title>
+    <link rel="stylesheet" href="../src/css/style.css"> 
+</head>
+<body>
+    <div class="auth-container">
+        
+        <div id="welcomeMessage">
+            </div>
+
+        <h2 id="authTitle">Đăng Nhập</h2>
+        
+        <form id="loginForm">
+            <input type="email" id="loginEmail" placeholder="Email" required>
+            <input type="password" id="loginPassword" placeholder="Mật khẩu" required>
+            <button type="submit">Đăng Nhập</button>
+        </form>
+
+        <p id="toggleText">
+            Chưa có tài khoản? 
+            <button id="toggleRegisterBtn" class="toggle-btn">Đăng Ký</button>
+        </p>
+
+        <div id="registerSection" style="display: none;">
+            <form id="registerForm">
+                <input type="text" id="regName" placeholder="Tên của bạn" required>
+                <input type="email" id="regEmail" placeholder="Email" required>
+                <input type="password" id="regPassword" placeholder="Mật khẩu (min 6 ký tự)" required>
+                <input type="password" id="regConfirmPassword" placeholder="Xác nhận mật khẩu" required>
+                <button type="submit">Tạo Tài Khoản</button>
+                <button type="button" id="toggleLoginBtn" class="toggle-btn">Quay lại Đăng nhập</button>
+            </form>
+        </div>
+        
+        <p id="message"></p>
+    </div>
+
+    <script src="../src/js/auth.js"></script>
+</body>
+</html>
