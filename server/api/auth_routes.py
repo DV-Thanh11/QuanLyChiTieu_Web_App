@@ -1,19 +1,20 @@
 from flask import Blueprint, request, jsonify, current_app
-import mysql.connector
-import bcrypt # Dùng để mã hóa mật khẩu
-from flask import Blueprint, request, jsonify, current_app
-import mysql.connector
-import bcrypt # Dùng để mã hóa mật khẩu
-
-# THÊM CÁC IMPORTS MỚI CHO QUÊN MẬT KHẨU
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 from flask_mail import Message, Mail
-# END IMPORTS MỚI
+# THÊM CÁC IMPORTS MỚI CHO QUÊN MẬT KHẨU
 
-# Tạo Blueprint để nhóm các routes xác thực
+import mysql.connector
+import bcrypt # Dùng để mã hóa mật khẩu
 auth_bp = Blueprint('auth', __name__)
+def get_db_connection():
+    # Hàm kết nối DB, sử dụng cấu hình từ app.py
+    return mysql.connector.connect(
+        host=current_app.config['MYSQL_HOST'],
+        user=current_app.config['MYSQL_USER'],
+        password=current_app.config['MYSQL_PASSWORD'],
+        database=current_app.config['MYSQL_DB']
+    )
 
-# ... (Hàm get_db_connection)
 
 # --- CÁC HÀM HỖ TRỢ CHO KHÔI PHỤC MẬT KHẨU ---
 
@@ -70,23 +71,7 @@ def send_password_reset_email(user_email, reset_url):
     except Exception as e:
         print(f"LỖI GỬI EMAIL: {e}")
         return False
-        
-# --- END HÀM HỖ TRỢ ---
-
-@auth_bp.route('/register', methods=['POST'])
-# ... (Các hàm register và login giữ nguyên)
-
-# Tạo Blueprint để nhóm các routes xác thực
-auth_bp = Blueprint('auth', __name__)
-
-def get_db_connection():
-    # Hàm kết nối DB, sử dụng cấu hình từ app.py
-    return mysql.connector.connect(
-        host=current_app.config['MYSQL_HOST'],
-        user=current_app.config['MYSQL_USER'],
-        password=current_app.config['MYSQL_PASSWORD'],
-        database=current_app.config['MYSQL_DB']
-    )
+    
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -210,6 +195,7 @@ def forgot_password():
         if db and db.is_connected():
             cursor.close()
             db.close() 
+
 @auth_bp.route('/reset-password', methods=['POST'])
 def reset_password():
     """Endpoint nhận token và mật khẩu mới để đặt lại mật khẩu."""
