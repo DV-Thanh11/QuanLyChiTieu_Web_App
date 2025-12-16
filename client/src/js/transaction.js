@@ -1,145 +1,151 @@
-// client/src/js/transaction.js
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
+document.addEventListener("DOMContentLoaded", function () {
+  // === 1. CẤU HÌNH DANH SÁCH DANH MỤC (Đã cập nhật theo yêu cầu) ===
+  const categories = {
+    // Danh sách Chi tiêu
+    expense: [
+      "Ăn uống",
+      "Học tập",
+      "Vui chơi",
+      "Quần áo",
+      "Cưới vợ",
+      "Di chuyển",
+      "Tiền nhà",
+      "Khác",
+    ],
+    // Danh sách Thu nhập
+    income: ["Lương", "Thưởng", "Lãi tiết kiệm", "Được tặng", "Khác"],
+  };
 
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('transactionForm');
-    const amountInput = document.getElementById('transactionAmount');
-    const descriptionInput = document.getElementById('transactionDescription');
-    const dateInput = document.getElementById('transactionDate');
-    const categorySelect = document.getElementById('transactionCategory');
-    const messageDisplay = document.getElementById('transactionMessage');
+  let currentType = "expense"; // Mặc định là Chi tiêu
 
-    const expenseTab = document.getElementById('expense-tab');
-    const incomeTab = document.getElementById('income-tab');
-    
-    // Khởi tạo loại giao dịch mặc định là 'expense'
-    let currentType = 'expense'; 
-    
-    // Hàm hiển thị thông báo
-    function showMessage(msg, type) {
-        messageDisplay.textContent = msg;
-        messageDisplay.style.color = type === 'error' ? 'red' : 'green';
+  // === 2. LẤY CÁC THẺ HTML ===
+  const expenseTab = document.getElementById("expense-tab");
+  const incomeTab = document.getElementById("income-tab");
+  const categorySelect = document.getElementById("transactionCategory");
+  const form = document.getElementById("transactionForm");
+  const dateInput = document.getElementById("transactionDate");
+  const btnSubmit = document.getElementById("btnSubmit"); // Nút lưu
+
+  // === 3. HÀM XỬ LÝ ===
+
+  // Hàm nạp danh mục vào ô chọn (Dropdown)
+  function loadCategories(type) {
+    // Xóa danh sách cũ
+    categorySelect.innerHTML = '<option value="">-- Chọn danh mục --</option>';
+
+    // Lấy danh sách mới
+    const list = categories[type];
+
+    // Tạo từng dòng option
+    if (list) {
+      list.forEach((catName) => {
+        const option = document.createElement("option");
+        option.value = catName;
+        option.textContent = catName;
+        categorySelect.appendChild(option);
+      });
     }
-  
+  }
 
-// Hàm tải danh mục từ Backend
-async function loadCategories(type) {
-    const response = await fetch(`${API_BASE_URL}/categories?type=${type}`);
+  // Hàm set ngày hôm nay
+  function setToday() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+  }
 
-    if (response.ok) {
-        const result = await response.json();
-        const categories = result.categories;
+  // Hàm đổi Tab (Thu / Chi)
+  function switchTab(type) {
+    currentType = type;
 
-        // Xóa các tùy chọn cũ
-        categorySelect.innerHTML = '<option value="">-- Chọn Danh mục --</option>'; 
+    if (type === "expense") {
+      // Đang chọn Chi tiêu
+      expenseTab.classList.add("active");
+      incomeTab.classList.remove("active");
+      document.body.classList.remove("mode-income"); // Xóa màu xanh
 
-        // Thêm các tùy chọn mới
-        categories.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat.category_id;
-            option.textContent = cat.name;
-            categorySelect.appendChild(option);
-        });
-        return true;
+      // Đổi chữ trên nút
+      if (btnSubmit) btnSubmit.innerText = "Lưu khoản Chi";
     } else {
-        showMessage("Lỗi: Không tải được danh mục.", 'error');
-        categorySelect.innerHTML = '<option value="">Lỗi tải danh mục</option>';
-        return false;
+      // Đang chọn Thu nhập
+      incomeTab.classList.add("active");
+      expenseTab.classList.remove("active");
+      document.body.classList.add("mode-income"); // Thêm màu xanh
+
+      // Đổi chữ trên nút
+      if (btnSubmit) btnSubmit.innerText = "Lưu khoản Thu";
     }
-}
 
-    // --- Xử lý Tabs ---
-    function switchTab(type) {
-        currentType = type;
-        // 1. Cập nhật trạng thái Active của Tabs
-        expenseTab.classList.remove('active');
-        incomeTab.classList.remove('active');
+    // Nạp lại danh mục tương ứng
+    loadCategories(type);
+  }
 
-        if (type === 'expense') {
-        expenseTab.classList.add('active');
+  // === 4. BẮT SỰ KIỆN (CLICK & SUBMIT) ===
+
+  // Khi bấm tab Chi tiêu
+  if (expenseTab)
+    expenseTab.addEventListener("click", () => switchTab("expense"));
+
+  // Khi bấm tab Thu nhập
+  if (incomeTab) incomeTab.addEventListener("click", () => switchTab("income"));
+
+  // Khi bấm nút Lưu (Submit form)
+  if (form)
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault(); // Chặn reload trang
+
+      // Lấy dữ liệu từ form
+      const amount = document.getElementById("transactionAmount").value;
+      const category = categorySelect.value;
+      const date = dateInput.value;
+      const note = document.getElementById("transactionDescription").value;
+
+      // Kiểm tra dữ liệu
+      if (!amount || amount <= 0) {
+        alert("Vui lòng nhập số tiền hợp lệ!");
+        return;
+      }
+      if (!category) {
+        alert("Vui lòng chọn danh mục!");
+        return;
+      }
+
+      const formData = {
+        amount: amount,
+        category: category,
+        transaction_date: date,
+        description: note,
+        type: currentType,
+      };
+
+      // Gửi về Server (Python)
+      try {
+        const response = await fetch("/api/transaction/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+
+        if (response.ok) {
+          alert("✅ Đã lưu thành công!");
+
+          // Reset form sau khi lưu
+          document.getElementById("transactionAmount").value = "";
+          document.getElementById("transactionDescription").value = "";
+          categorySelect.value = "";
+          setToday();
         } else {
-            incomeTab.classList.add('active');
+          alert("❌ Lỗi khi lưu dữ liệu!");
         }
-       loadCategories(type); 
-
-        // Cập nhật màu nút Submit dựa trên loại giao dịch
-        const submitBtn = form.querySelector('.submit-btn');
-        const isIncome = type === 'income';
-
-        submitBtn.textContent = `Ghi nhận ${isIncome ? 'Thu nhập' : 'Chi tiêu'}`;
-
-        if (isIncome) {
-            submitBtn.classList.remove('green-bg');
-            submitBtn.classList.add('red-bg'); // Cần thêm style .red-bg trong CSS
-        } else { // income
-            submitBtn.classList.remove('red-bg');
-            submitBtn.classList.add('green-bg');
-        }   
-        showMessage('', null); // Xóa thông báo khi chuyển tab
-        // TODO: Cần thêm logic tải lại danh mục theo type (sẽ làm ở US03)
-    }
-
-    expenseTab.addEventListener('click', () => switchTab('expense'));
-    incomeTab.addEventListener('click', () => switchTab('income'));
-    
-    // Đặt ngày hiện tại làm mặc định
-    dateInput.valueAsDate = new Date();
-    
-    // --- Xử lý Submit Form ---
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const amount = parseFloat(amountInput.value);
-        const description = descriptionInput.value;
-        const transaction_date = dateInput.value;
-        const category_id = categorySelect.value;
-        
-        // Lấy user_id từ localStorage (được lưu sau khi login thành công)
-        const user_id = localStorage.getItem('user_id');
-
-        if (!user_id) {
-            showMessage("Lỗi: Vui lòng đăng nhập lại (Thiếu User ID).", 'error');
-            return;
-        }
-
-        if (!amount || amount <= 0) {
-            showMessage("Lỗi: Số tiền không hợp lệ.", 'error');
-            return;
-        }
-
-        showMessage("Đang ghi nhận giao dịch...", 'success');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/transactions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    user_id: user_id,
-                    type: currentType,
-                    amount: amount,
-                    description: description,
-                    transaction_date: transaction_date,
-                    category_id: category_id
-                })
-            });
-            
-            const result = await response.json();
-
-            if (response.ok) {
-                showMessage(`Ghi nhận ${currentType} thành công!`, 'success');
-                form.reset();
-                dateInput.valueAsDate = new Date(); // Reset ngày về ngày hiện tại
-            } else {
-                showMessage("Lỗi Server: " + result.message, 'error');
-            }
-        } catch (error) {
-            console.error("Lỗi kết nối API:", error);
-            showMessage("Lỗi kết nối Server. Vui lòng kiểm tra Back-end.", 'error');
-        }
+      } catch (error) {
+        console.error(error);
+        alert("⚠️ Lỗi kết nối Server! (Bạn đã bật python app.py chưa?)");
+      }
     });
 
-    // Khởi tạo trạng thái tab ban đầu
-    switchTab('expense'); 
+  // === 5. CHẠY LẦN ĐẦU KHI VÀO TRANG ===
+  loadCategories("expense"); // Nạp danh mục chi tiêu mặc định
+  setToday(); // Điền ngày hôm nay
 });
