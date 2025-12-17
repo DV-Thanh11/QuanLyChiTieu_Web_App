@@ -69,36 +69,303 @@ def add_transaction():
             db.close()
             
     
-# Thêm các route khác (GET, PUT, DELETE) sau khi hoàn thành POST
-# ...
-@transaction_bp.route('/categories', methods=['GET'])
-def get_categories():
-    # Lấy tham số 'type' từ URL query (ví dụ: /categories?type=income)
-    category_type = request.args.get('type') 
-    
-    if category_type not in ['income', 'expense']:
-        return jsonify({"message": "Thiếu hoặc sai tham số 'type'."}), 400
+@transaction_bp.route('/transactions', methods=['GET'])
+def get_transactions():
+    # Hỗ trợ query param: user_id (bắt buộc)
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"message": "Thiếu tham số 'user_id'."}), 400
 
     db = None
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        
-        # 1. Truy vấn các danh mục theo loại
-        sql = "SELECT category_id, name FROM categories WHERE type = %s"
-        cursor.execute(sql, (category_type,))
-        
-        categories = cursor.fetchall()
 
-        # 2. Trả về danh sách danh mục
+        sql = '''
+        SELECT t.transaction_id, t.user_id, t.transaction_date, t.type, t.amount, t.description,
+               t.category_id, c.name AS category_name
+        FROM transactions t
+        LEFT JOIN categories c ON t.category_id = c.category_id
+        WHERE t.user_id = %s
+        ORDER BY t.transaction_date DESC, t.transaction_id DESC
+        '''
+        cursor.execute(sql, (user_id,))
+        rows = cursor.fetchall()
+
+        return jsonify({"message": "Lấy giao dịch thành công.", "transactions": rows}), 200
+
+    except mysql.connector.Error as err:
+        print(f"Lỗi MySQL khi lấy giao dịch: {err}")
+        return jsonify({"message": "Lỗi server khi lấy giao dịch."}), 500
+    finally:
+        if db and db.is_connected():
+            cursor.close()
+            db.close()
+
+
+@transaction_bp.route('/transactions/<int:tx_id>', methods=['GET'])
+def get_transaction(tx_id):
+    db = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        sql = '''
+        SELECT t.transaction_id, t.user_id, t.transaction_date, t.type, t.amount, t.description,
+               t.category_id, c.name AS category_name
+        FROM transactions t
+        LEFT JOIN categories c ON t.category_id = c.category_id
+        WHERE t.transaction_id = %s
+        '''
+        cursor.execute(sql, (tx_id,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"message": "Giao dịch không tồn tại."}), 404
+        return jsonify({"message": "OK", "transaction": row}), 200
+
+    except mysql.connector.Error as err:
+        print(f"Lỗi MySQL khi lấy giao dịch: {err}")
+        return jsonify({"message": "Lỗi server khi lấy giao dịch."}), 500
+    finally:
+        if db and db.is_connected():
+            cursor.close()
+            db.close()
+
+
+@transaction_bp.route('/transactions/<int:tx_id>', methods=['PUT'])
+def update_transaction(tx_id):
+    data = request.json
+    # Chỉ cho phép cập nhật một số trường cơ bản
+    allowed = ['amount', 'description', 'transaction_date', 'category_id', 'type']
+    fields = {k: data[k] for k in allowed if k in data}
+
+    if not fields:
+        return jsonify({"message": "Không có trường hợp lệ để cập nhật."}), 400
+
+    set_clause = ', '.join([f"{k} = %s" for k in fields.keys()])
+    params = list(fields.values())
+    params.append(tx_id)
+
+    db = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        sql = f"UPDATE transactions SET {set_clause} WHERE transaction_id = %s"
+        cursor.execute(sql, params)
+        db.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"message": "Giao dịch không tồn tại."}), 404
+
+        return jsonify({"message": "Cập nhật giao dịch thành công."}), 200
+
+    except mysql.connector.Error as err:
+        print(f"Lỗi MySQL khi cập nhật giao dịch: {err}")
+        return jsonify({"message": "Lỗi server khi cập nhật giao dịch."}), 500
+    finally:
+        if db and db.is_connected():
+            cursor.close()
+            db.close()
+
+
+@transaction_bp.route('/transactions/<int:tx_id>', methods=['DELETE'])
+def delete_transaction(tx_id):
+    db = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        sql = "DELETE FROM transactions WHERE transaction_id = %s"
+        cursor.execute(sql, (tx_id,))
+        db.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"message": "Giao dịch không tồn tại."}), 404
+
+        return jsonify({"message": "Xóa giao dịch thành công."}), 200
+
+    except mysql.connector.Error as err:
+        print(f"Lỗi MySQL khi xóa giao dịch: {err}")
+        return jsonify({"message": "Lỗi server khi xóa giao dịch."}), 500
+    finally:
+        if db and db.is_connected():
+            cursor.close()
+            db.close()
+
+
+@transaction_bp.route('/balance', methods=['GET'])
+def get_balance():
+    # Trả về tổng tiền: thu nhập - chi tiêu cho user
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"message": "Thiếu tham số 'user_id'."}), 400
+
+    db = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        sql = "SELECT type, SUM(amount) FROM transactions WHERE user_id = %s GROUP BY type"
+        cursor.execute(sql, (user_id,))
+        rows = cursor.fetchall()
+
+        total_income = 0.0
+        total_expense = 0.0
+        for r in rows:
+            ttype = r[0]
+            s = r[1] if r[1] is not None else 0
+            if ttype == 'income':
+                total_income = float(s)
+            elif ttype == 'expense':
+                total_expense = float(s)
+
+        balance = total_income - total_expense
+        return jsonify({"message": "OK", "balance": balance, "income": total_income, "expense": total_expense}), 200
+
+    except mysql.connector.Error as err:
+        print(f"Lỗi MySQL khi lấy balance: {err}")
+        return jsonify({"message": "Lỗi server khi tính balance."}), 500
+    finally:
+        if db and db.is_connected():
+            cursor.close()
+            db.close()
+@transaction_bp.route('/categories', methods=['GET'])
+def get_categories():
+    # Hỗ trợ: /categories hoặc /categories?type=income
+    category_type = request.args.get('type')
+
+    db = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+
+        if category_type:
+            if category_type not in ['income', 'expense']:
+                return jsonify({"message": "Tham số 'type' không hợp lệ."}), 400
+            sql = "SELECT category_id, name, type FROM categories WHERE type = %s"
+            cursor.execute(sql, (category_type,))
+        else:
+            sql = "SELECT category_id, name, type FROM categories"
+            cursor.execute(sql)
+
+        categories = cursor.fetchall()
         return jsonify({
             "message": "Lấy danh mục thành công.",
             "categories": categories
         }), 200
-        
+
     except mysql.connector.Error as err:
         print(f"Lỗi MySQL khi lấy danh mục: {err}")
         return jsonify({"message": "Lỗi server khi xử lý danh mục."}), 500
+    finally:
+        if db and db.is_connected():
+            cursor.close()
+            db.close()
+
+
+@transaction_bp.route('/categories', methods=['POST'])
+def create_category():
+    data = request.json or {}
+    name = data.get('name')
+    ctype = data.get('type')
+    if not name or ctype not in ['income', 'expense']:
+        return jsonify({"message": "Thiếu tên hoặc type không hợp lệ."}), 400
+
+    db = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        sql = "INSERT INTO categories (name, type) VALUES (%s, %s)"
+        cursor.execute(sql, (name, ctype))
+        db.commit()
+        return jsonify({"message": "Tạo danh mục thành công.", "category_id": cursor.lastrowid}), 201
+    except mysql.connector.Error as err:
+        print(f"Lỗi MySQL khi tạo danh mục: {err}")
+        return jsonify({"message": "Lỗi server khi tạo danh mục."}), 500
+    finally:
+        if db and db.is_connected():
+            cursor.close()
+            db.close()
+
+
+@transaction_bp.route('/categories/<int:cat_id>', methods=['PUT'])
+def update_category(cat_id):
+    data = request.json or {}
+    name = data.get('name')
+    ctype = data.get('type')
+    if not name and not ctype:
+        return jsonify({"message": "Không có trường hợp lệ để cập nhật."}), 400
+    updates = []
+    params = []
+    if name:
+        updates.append('name = %s')
+        params.append(name)
+    if ctype:
+        if ctype not in ['income', 'expense']:
+            return jsonify({"message": "Type không hợp lệ."}), 400
+        updates.append('type = %s')
+        params.append(ctype)
+    params.append(cat_id)
+
+    db = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        sql = f"UPDATE categories SET {', '.join(updates)} WHERE category_id = %s"
+        cursor.execute(sql, tuple(params))
+        db.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"message": "Danh mục không tồn tại."}), 404
+        return jsonify({"message": "Cập nhật danh mục thành công."}), 200
+    except mysql.connector.Error as err:
+        print(f"Lỗi MySQL khi cập nhật danh mục: {err}")
+        return jsonify({"message": "Lỗi server khi cập nhật danh mục."}), 500
+    finally:
+        if db and db.is_connected():
+            cursor.close()
+            db.close()
+
+
+@transaction_bp.route('/categories/<int:cat_id>', methods=['DELETE'])
+def delete_category(cat_id):
+    db = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        # Optionally, ensure no transactions reference this category
+        cursor.execute("DELETE FROM categories WHERE category_id = %s", (cat_id,))
+        db.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"message": "Danh mục không tồn tại."}), 404
+        return jsonify({"message": "Xóa danh mục thành công."}), 200
+    except mysql.connector.Error as err:
+        print(f"Lỗi MySQL khi xóa danh mục: {err}")
+        return jsonify({"message": "Lỗi server khi xóa danh mục."}), 500
+    finally:
+        if db and db.is_connected():
+            cursor.close()
+            db.close()
+# --- [BỔ SUNG MỚI] API ĐẾM TỔNG SỐ GIAO DỊCH ---
+@transaction_bp.route('/transactions/count', methods=['GET'])
+def count_transactions():
+    # Lấy user_id từ param
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"count": 0}), 400
+
+    db = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        
+        # Chỉ đếm số lượng dòng, rất nhẹ và nhanh
+        sql = "SELECT COUNT(*) FROM transactions WHERE user_id = %s"
+        cursor.execute(sql, (user_id,))
+        result = cursor.fetchone()
+        
+        count = result[0] if result else 0
+        return jsonify({"message": "OK", "count": count}), 200
+
+    except Exception as e:
+        print(f"Lỗi đếm giao dịch: {e}")
+        return jsonify({"count": 0}), 500
     finally:
         if db and db.is_connected():
             cursor.close()

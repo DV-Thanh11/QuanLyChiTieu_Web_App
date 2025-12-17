@@ -1,12 +1,3 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Chi Tiêu - Đăng Nhập</title>
-    <link rel="stylesheet" href="../src/css/style.css"> 
-</head>
-<body>
     <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -45,8 +36,7 @@
 
                     <label for="loginPassword">Password*</label>
                     <input type="password" id="loginPassword" required>
-                    
-                    <a href="#" id="forgotPasswordLink" class="forgot-password">Forgot password?</a>
+            
                     
                     <button type="submit" class="main-auth-btn green-bg">Log in</button>
                 </form>
@@ -68,19 +58,6 @@
                     
                     <button type="submit" class="main-auth-btn green-bg">Sign up</button>
                 </form>
-                <form id="forgotPasswordForm" class="auth-form" style="display: none;">
-                     <h3>Khôi phục Mật khẩu</h3>
-                    <p class="form-description">Vui lòng nhập Email đã đăng ký để chúng tôi gửi liên kết đặt lại mật khẩu.</p>
-
-                    <label for="forgotEmail">Email*</label>
-                    <input type="email" id="forgotEmail" placeholder="Email của bạn" required>
-
-                    <button type="submit" class="main-auth-btn green-bg">Gửi liên kết</button>
-                    <button type="button" id="backToLoginFromForgotBtn" class="toggle-btn" style="margin-top: 10px;">
-                        Quay lại Đăng nhập
-                    </button>
-                </form>
-
                 <p id="message"></p>
             </div>
         </div>

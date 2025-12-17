@@ -11,27 +11,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const messageDisplay = document.getElementById('message');
     
-    // Loại bỏ các khai báo cũ không dùng trong giao diện mới:
-    // const toggleRegisterBtn = document.getElementById('toggleRegisterBtn');
-    // const toggleLoginBtn = document.getElementById('toggleLoginBtn');
-    // const registerSection = document.getElementById('registerSection');
-    // const authTitle = document.getElementById('authTitle');
-    // const welcomeMessage = document.getElementById('welcomeMessage'); 
-    
-    // Hàm hiển thị thông báo lỗi/thành công
     function showMessage(msg, type) {
         messageDisplay.textContent = msg;
         messageDisplay.style.color = type === 'error' ? 'red' : 'green';
     }
 
     // Hàm chuyển đổi chế độ xác thực (Đăng nhập/Đăng ký)
-    // Hàm chuyển đổi chế độ xác thực (Đăng nhập/Đăng ký/Quên Mật khẩu)
     function switchAuthMode(mode) {
         // Ẩn tất cả form trước khi hiển thị form cần thiết
         loginForm.style.display = 'none';
         registerForm.style.display = 'none';
-        forgotPasswordForm.style.display = 'none'; // Thêm ẩn form mới
-
         // Xóa trạng thái active của tabs
         loginTab.classList.remove('active');
         signupTab.classList.remove('active');
@@ -42,11 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (mode === 'register') {
             registerForm.style.display = 'flex';
             signupTab.classList.add('active');
-        } else if (mode === 'forgot') {
-            forgotPasswordForm.style.display = 'flex';
-            // Không set active cho tab nào khi ở chế độ quên mật khẩu
         }
-    
         messageDisplay.textContent = ''; // Xóa thông báo cũ
     }
     
@@ -110,10 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
-        // KHAI BÁO MỚI CHO FORGOT PASSWORD
-        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
-        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
-        const backToLoginFromForgotBtn = document.getElementById('backToLoginFromForgotBtn');
         showMessage("Đang đăng nhập...", 'success');
 
         try {
@@ -148,45 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
              showMessage("Lỗi kết nối Server. Vui lòng kiểm tra Back-end.", 'error');
         }
     });
-    // Gắn sự kiện cho link "Quên mật khẩu"
-    forgotPasswordLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    switchAuthMode('forgot');
-    });
-
-    // Gắn sự kiện cho nút "Quay lại Đăng nhập" trong form Quên Mật khẩu
-    backToLoginFromForgotBtn.addEventListener('click', () => {
-        switchAuthMode('login');
-    });
-
-    // --- Xử lý Gửi yêu cầu Quên Mật khẩu ---
-    forgotPasswordForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
     
-    const email = document.getElementById('forgotEmail').value;
-    showMessage("Đang gửi liên kết khôi phục tới Email...", 'success');
-
-    try {
-        // Gửi yêu cầu POST đến Backend API
-        const response = await fetch(`${API_BASE_URL}/forgot-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email })
-        });
-        
-        const result = await response.json();
-
-        if (response.ok) {
-            showMessage(result.message, 'success');
-            // resetForm.reset(); // Không reset form để người dùng thấy email họ đã nhập
-        } else {
-            showMessage("Lỗi: " + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage("Lỗi kết nối Server khi yêu cầu khôi phục.", 'error');
-    }
-    });
 
 });
