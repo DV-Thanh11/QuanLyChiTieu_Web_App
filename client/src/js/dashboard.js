@@ -74,12 +74,20 @@ function renderCategoryChart(data) {
   const ctx = document.getElementById('categoryChart');
   const emptyMsg = document.getElementById('categoryChartEmpty');
   
-  if (!ctx) return;
+  if (!ctx) {
+    console.warn('Không tìm thấy element categoryChart');
+    return;
+  }
+
+  console.log('📊 Dữ liệu biểu đồ danh mục:', data);
 
   // Lọc chỉ lấy dữ liệu chi tiêu (expense)
-  const expenseData = data.filter(d => d.type === 'expense');
+  const expenseData = Array.isArray(data) ? data.filter(d => d.type === 'expense') : [];
+  
+  console.log('📊 Dữ liệu chi tiêu đã lọc:', expenseData);
   
   if (!expenseData || expenseData.length === 0) {
+    console.log('⚠️ Không có dữ liệu chi tiêu để vẽ biểu đồ');
     if (categoryChart) {
       categoryChart.destroy();
       categoryChart = null;
@@ -95,45 +103,56 @@ function renderCategoryChart(data) {
   const labels = expenseData.map(d => d.category || 'Khác');
   const values = expenseData.map(d => Number(d.total) || 0);
 
-  if (categoryChart) categoryChart.destroy();
+  console.log('📊 Labels:', labels);
+  console.log('📊 Values:', values);
+
+  if (categoryChart) {
+    categoryChart.destroy();
+    categoryChart = null;
+  }
   
-  categoryChart = new Chart(ctx.getContext('2d'), {
-    type: 'pie',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: values,
-        backgroundColor: [
-          '#e74c3c',
-          '#3498db',
-          '#2ecc71',
-          '#f39c12',
-          '#9b59b6',
-          '#1abc9c',
-          '#e67e22',
-          '#34495e'
-        ]
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: {
-          position: 'bottom'
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.label || '';
-              const value = context.parsed || 0;
-              return label + ': ' + formatCurrency(value);
+  try {
+    categoryChart = new Chart(ctx.getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: [
+            '#e74c3c',
+            '#3498db',
+            '#2ecc71',
+            '#f39c12',
+            '#9b59b6',
+            '#1abc9c',
+            '#e67e22',
+            '#34495e'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.parsed || 0;
+                return label + ': ' + formatCurrency(value);
+              }
             }
           }
         }
       }
-    }
-  });
+    });
+    console.log('✅ Biểu đồ danh mục đã được vẽ thành công');
+  } catch (error) {
+    console.error('❌ Lỗi khi vẽ biểu đồ danh mục:', error);
+  }
 }
 
 // Vẽ biểu đồ thu/chi theo tháng
@@ -220,27 +239,41 @@ function renderMonthlyChart(data) {
 
 // Hàm làm mới dữ liệu dashboard
 async function refreshDashboard(user_id) {
+  console.log('🔄 Đang làm mới dashboard cho user_id:', user_id);
+  
   // Lấy số dư và cập nhật tổng quan
   const balanceData = await fetchBalance(user_id);
   if (balanceData) {
+    console.log('💰 Dữ liệu số dư:', balanceData);
     updateStatsOverview(balanceData);
+  } else {
+    console.warn('⚠️ Không lấy được dữ liệu số dư');
   }
 
   // Lấy thống kê và vẽ biểu đồ
   const stats = await fetchStats(user_id);
+  console.log('📈 Dữ liệu thống kê từ API:', stats);
+  
   if (stats) {
-    if (stats.by_category && stats.by_category.length > 0) {
+    // Vẽ biểu đồ danh mục
+    if (stats.by_category && Array.isArray(stats.by_category)) {
+      console.log('📊 Có', stats.by_category.length, 'danh mục để vẽ');
       renderCategoryChart(stats.by_category);
     } else {
+      console.warn('⚠️ Không có dữ liệu by_category hoặc không phải array');
       renderCategoryChart([]);
     }
     
-    if (stats.by_month && stats.by_month.length > 0) {
+    // Vẽ biểu đồ theo tháng
+    if (stats.by_month && Array.isArray(stats.by_month)) {
+      console.log('📅 Có', stats.by_month.length, 'tháng để vẽ');
       renderMonthlyChart(stats.by_month);
     } else {
+      console.warn('⚠️ Không có dữ liệu by_month hoặc không phải array');
       renderMonthlyChart([]);
     }
   } else {
+    console.warn('⚠️ Không lấy được dữ liệu thống kê từ API');
     // Nếu không có dữ liệu, hiển thị thông báo trống
     renderCategoryChart([]);
     renderMonthlyChart([]);

@@ -1,6 +1,64 @@
 // client/src/js/transaction.js
 const API_BASE_URL = "http://127.0.0.1:5000/api";
 
+// --- CÁC HÀM HỖ TRỢ US03 - PHẢI KHAI BÁO TRƯỚC DOMContentLoaded ---
+function formatCurrency(amount) {
+  try {
+    const abs = Math.abs(Number(amount) || 0);
+    return new Intl.NumberFormat("vi-VN").format(abs) + "đ";
+  } catch (e) {
+    return (amount || 0) + "đ";
+  }
+}
+
+function parseCurrencyText(text) {
+  if (!text) return 0;
+  // Loại bỏ ký tự không phải số hoặc dấu trừ
+  const cleaned = text
+    .toString()
+    .replace(/[^\d\-]/g, "")
+    .trim();
+  return Number(cleaned || 0);
+}
+
+function updateOverviewClientSide(type, amount) {
+  const incomeEl = document.getElementById("totalIncome");
+  const expenseEl = document.getElementById("totalExpense");
+  const balanceEl = document.getElementById("mainBalance");
+
+  if (!incomeEl || !expenseEl || !balanceEl) {
+    console.warn("Không tìm thấy các element US03:", { incomeEl, expenseEl, balanceEl });
+    return;
+  }
+
+  const currentIncome = parseCurrencyText(incomeEl.textContent);
+  const currentExpense = parseCurrencyText(expenseEl.textContent);
+
+  let newIncome = currentIncome;
+  let newExpense = currentExpense;
+
+  if (type === "income") {
+    newIncome = currentIncome + Number(amount || 0);
+  } else {
+    newExpense = currentExpense + Number(amount || 0);
+  }
+
+  const newBalance = newIncome - newExpense;
+
+  incomeEl.textContent = formatCurrency(newIncome);
+  expenseEl.textContent = formatCurrency(newExpense);
+  balanceEl.textContent = formatCurrency(newBalance);
+
+  // Đổi màu số dư theo âm/dương
+  if (newBalance >= 0) {
+    balanceEl.style.color = "#27ae60";
+  } else {
+    balanceEl.style.color = "#e74c3c";
+  }
+
+  console.log("✅ Đã cập nhật US03:", { type, amount, newIncome, newExpense, newBalance });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("transactionForm");
   const amountInput = document.getElementById("transactionAmount");
@@ -108,11 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 1) Cập nhật ngay phần Tổng Thu / Tổng Chi / Số Dư theo số tiền người dùng nhập
     //    (hoạt động kể cả khi chưa có backend hoặc chưa đăng nhập)
-    try {
-      updateOverviewClientSide(currentType, amount);
-    } catch (e) {
-      console.warn("Không thể cập nhật overview client-side:", e);
-    }
+    updateOverviewClientSide(currentType, amount);
 
     // 2) Nếu không có user_id → chạy như chế độ "máy tính" chỉ tính trên giao diện, không gọi API
     if (!user_id) {
@@ -148,12 +202,27 @@ document.addEventListener("DOMContentLoaded", () => {
         showMessage(`Ghi nhận ${currentType} thành công!`, "success");
         form.reset();
         dateInput.valueAsDate = new Date(); // Reset ngày về ngày hiện tại
-        // Cập nhật giao diện: tổng số dư và notifications (dùng dữ liệu thật từ backend nếu có)
+        
+        // Cập nhật lại US03 từ backend để đảm bảo đồng bộ (sau khi đã cập nhật client-side ở trên)
         try {
           await updateUIAfterChange(user_id);
-          // Làm mới dashboard nếu hàm có sẵn (từ dashboard.js)
+          // Làm mới dashboard để cập nhật US03 từ dữ liệu thật của backend
           if (typeof window.refreshDashboard === 'function') {
             await window.refreshDashboard(user_id);
+          } else {
+            // Nếu không có refreshDashboard, vẫn cập nhật US03 từ balance API
+            const bal = await getBalanceForUser(user_id);
+            if (bal) {
+              const incomeEl = document.getElementById("totalIncome");
+              const expenseEl = document.getElementById("totalExpense");
+              const balanceEl = document.getElementById("mainBalance");
+              if (incomeEl) incomeEl.textContent = formatCurrency(bal.income || 0);
+              if (expenseEl) expenseEl.textContent = formatCurrency(bal.expense || 0);
+              if (balanceEl) {
+                balanceEl.textContent = formatCurrency(bal.balance || 0);
+                balanceEl.style.color = (bal.balance >= 0) ? "#27ae60" : "#e74c3c";
+              }
+            }
           }
         } catch (uiErr) {
           console.error("Lỗi khi cập nhật UI sau khi tạo giao dịch:", uiErr);
@@ -253,14 +322,7 @@ async function updateTransactionById(tx_id, payload) {
 }
 
 // --- UI update helpers ---
-function formatCurrency(amount) {
-  try {
-    const abs = Math.abs(Number(amount) || 0);
-    return new Intl.NumberFormat("vi-VN").format(abs) + "đ";
-  } catch (e) {
-    return (amount || 0) + "đ";
-  }
-}
+// formatCurrency đã được khai báo ở trên
 
 function updateBalanceDisplay(balanceValue) {
   const el = document.getElementById("totalBalance");
@@ -329,7 +391,14 @@ function updateNotificationList(transactions) {
         if (okDel) {
           // refresh UI after deletion
           const uid = localStorage.getItem("user_id");
-          if (uid) await updateUIAfterChange(uid);
+          if (uid) {
+            // Cập nhật lại sidebar (số dư và notification)
+            await updateUIAfterChange(uid);
+            // Đồng thời làm mới luôn Dashboard (US03: Tổng Thu/Chi/Số dư + biểu đồ)
+            if (typeof window.refreshDashboard === "function") {
+              await window.refreshDashboard(uid);
+            }
+          }
         } else {
           alert("Xóa thất bại");
         }
@@ -348,49 +417,6 @@ function updateNotificationList(transactions) {
   });
 }
 
-// --- CẬP NHẬT TỔNG THU / TỔNG CHI / SỐ DƯ Ở DASHBOARD (CLIENT-SIDE) ---
-function parseCurrencyText(text) {
-  if (!text) return 0;
-  // Loại bỏ ký tự không phải số hoặc dấu trừ
-  const cleaned = text
-    .toString()
-    .replace(/[^\d\-]/g, "")
-    .trim();
-  return Number(cleaned || 0);
-}
-
-function updateOverviewClientSide(type, amount) {
-  const incomeEl = document.getElementById("totalIncome");
-  const expenseEl = document.getElementById("totalExpense");
-  const balanceEl = document.getElementById("mainBalance");
-
-  if (!incomeEl || !expenseEl || !balanceEl) return;
-
-  const currentIncome = parseCurrencyText(incomeEl.textContent);
-  const currentExpense = parseCurrencyText(expenseEl.textContent);
-
-  let newIncome = currentIncome;
-  let newExpense = currentExpense;
-
-  if (type === "income") {
-    newIncome = currentIncome + Number(amount || 0);
-  } else {
-    newExpense = currentExpense + Number(amount || 0);
-  }
-
-  const newBalance = newIncome - newExpense;
-
-  incomeEl.textContent = formatCurrency(newIncome);
-  expenseEl.textContent = formatCurrency(newExpense);
-  balanceEl.textContent = formatCurrency(newBalance);
-
-  // Đổi màu số dư theo âm/dương
-  if (newBalance >= 0) {
-    balanceEl.style.color = "#27ae60";
-  } else {
-    balanceEl.style.color = "#e74c3c";
-  }
-}
 async function updateUIAfterChange(user_id) {
   if (!user_id) return;
   const bal = await getBalanceForUser(user_id);
@@ -414,6 +440,7 @@ window.updateTransactionById = updateTransactionById;
 window.updateBalanceDisplay = updateBalanceDisplay;
 window.updateNotificationList = updateNotificationList;
 window.updateUIAfterChange = updateUIAfterChange;
+window.updateOverviewClientSide = updateOverviewClientSide; // Export hàm US03 để debug
 
 // On page load, try to populate balance and notifications for logged user
 document.addEventListener("DOMContentLoaded", async () => {
