@@ -411,3 +411,142 @@ body.mode-income .tab-btn.active {
   text-transform: uppercase; /* Chữ in hoa cho mạnh mẽ */
   letter-spacing: 1px;
 }
+
+/* === 4. PHẦN TỔNG QUAN SỐ LIỆU (US03) === */
+.stats-overview {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 200px;
+  background: #ffffff;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8em;
+  color: white;
+}
+
+.income-card .stat-icon {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.expense-card .stat-icon {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.balance-card .stat-icon {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.stat-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.income-card .stat-value {
+  color: #27ae60;
+}
+
+.expense-card .stat-value {
+  color: #e74c3c;
+}
+
+/* === 5. STYLING CHO BIỂU ĐỒ (CHARTS) === */
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 25px;
+  margin-top: 30px;
+}
+
+.chart-card {
+  background: #ffffff;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card h3 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chart-card h3 i {
+  color: #3498db;
+}
+
+#categoryChartContainer,
+#monthlyChartContainer {
+  position: relative;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-message {
+  text-align: center;
+  color: #95a5a6;
+  font-style: italic;
+  padding: 40px;
+  font-size: 1rem;
+}
+
+/* Responsive cho phần tổng quan */
+@media (max-width: 768px) {
+  .stats-overview {
+    flex-direction: column;
+  }
+  
+  .stat-card {
+    min-width: 100%;
+  }
+  
+  .charts {
+    grid-template-columns: 1fr;
+  }
+  
+  #categoryChartContainer,
+  #monthlyChartContainer {
+    height: 250px;
+  }
+}

@@ -138,6 +138,10 @@ document.addEventListener("DOMContentLoaded", () => {
         // Cập nhật giao diện: tổng số dư và notifications
         try {
           await updateUIAfterChange(user_id);
+          // Làm mới dashboard nếu hàm có sẵn (từ dashboard.js)
+          if (typeof window.refreshDashboard === 'function') {
+            await window.refreshDashboard(user_id);
+          }
         } catch (uiErr) {
           console.error("Lỗi khi cập nhật UI sau khi tạo giao dịch:", uiErr);
         }
