@@ -409,33 +409,4 @@ def transaction_stats():
         if db and db.is_connected():
             cursor.close()
             db.close()
-
-
-# --- [BỔ SUNG MỚI] API ĐẾM TỔNG SỐ GIAO DỊCH ---
-@transaction_bp.route('/transactions/count', methods=['GET'])
-def count_transactions():
-    # Lấy user_id từ param
-    user_id = request.args.get('user_id')
-    if not user_id:
-        return jsonify({"count": 0}), 400
-
-    db = None
-    try:
-        db = get_db_connection()
-        cursor = db.cursor()
-        
-        # Chỉ đếm số lượng dòng, rất nhẹ và nhanh
-        sql = "SELECT COUNT(*) FROM transactions WHERE user_id = %s"
-        cursor.execute(sql, (user_id,))
-        result = cursor.fetchone()
-        
-        count = result[0] if result else 0
-        return jsonify({"message": "OK", "count": count}), 200
-
-    except Exception as e:
-        print(f"Lỗi đếm giao dịch: {e}")
-        return jsonify({"count": 0}), 500
-    finally:
-        if db and db.is_connected():
-            cursor.close()
-            db.close()
+            

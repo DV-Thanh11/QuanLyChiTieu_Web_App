@@ -536,15 +536,15 @@ body.mode-income .tab-btn.active {
   .stats-overview {
     flex-direction: column;
   }
-  
+
   .stat-card {
     min-width: 100%;
   }
-  
+
   .charts {
     grid-template-columns: 1fr;
   }
-  
+
   #categoryChartContainer,
   #monthlyChartContainer {
     height: 250px;

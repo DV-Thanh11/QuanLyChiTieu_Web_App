@@ -108,8 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     if (!category_id || category_id === "") {
-    showMessage("Lỗi: Vui lòng chọn một danh mục.", "error");
-    return;
+      showMessage("Lỗi: Vui lòng chọn một danh mục.", "error");
+      return;
     }
     showMessage("Đang ghi nhận giao dịch...", "success");
 
@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           await updateUIAfterChange(user_id);
           // Làm mới dashboard nếu hàm có sẵn (từ dashboard.js)
-          if (typeof window.refreshDashboard === 'function') {
+          if (typeof window.refreshDashboard === "function") {
             await window.refreshDashboard(user_id);
           }
         } catch (uiErr) {
@@ -370,58 +370,3 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 });
-// ============================================================
-// [BỔ SUNG MỚI] LOGIC ĐẾM SỐ GIAO DỊCH RIÊNG BIỆT
-// ============================================================
-
-// 1. Hàm gọi API đếm và cập nhật giao diện
-async function updateTransactionCounter() {
-  const user_id = localStorage.getItem("user_id");
-  if (!user_id) return;
-
-  try {
-    // Gọi API đếm mới thêm ở backend
-    const response = await fetch(
-      `${API_BASE_URL}/transactions/count?user_id=${user_id}`
-    );
-    const data = await response.json();
-
-    // Tìm thẻ hiển thị số (đã đặt id ở Bước 2)
-    const badge = document.getElementById("transaction-count");
-
-    if (badge && data.count !== undefined) {
-      badge.textContent = data.count;
-
-      // Hiệu ứng nhỏ: Nếu có dữ liệu thì đổi màu để gây chú ý
-      if (data.count > 0) {
-        badge.style.backgroundColor = "#ff4757"; // Màu đỏ
-        badge.style.color = "white";
-      } else {
-        badge.style.backgroundColor = "#ccc"; // Màu xám nếu là 0
-      }
-    }
-  } catch (error) {
-    console.error("Lỗi khi cập nhật số đếm:", error);
-  }
-}
-
-// 2. Kích hoạt đếm ngay khi tải trang
-document.addEventListener("DOMContentLoaded", () => {
-  updateTransactionCounter();
-});
-
-// 3. "Móc" vào hàm submit cũ để cập nhật số ngay sau khi thêm
-// (Chúng ta ghi đè nhẹ sự kiện submit để chèn thêm hàm updateTransactionCounter)
-const originalForm = document.getElementById("transactionForm");
-if (originalForm) {
-  // Lắng nghe sự kiện submit, nhưng chạy ở pha sau cùng để đảm bảo data đã lưu
-  originalForm.addEventListener("submit", async () => {
-    // Đợi 1 chút để request chính (add transaction) hoàn thành rồi mới đếm lại
-    setTimeout(() => {
-      updateTransactionCounter();
-    }, 800);
-  });
-}
-
-// Gán vào window để các phần khác có thể gọi nếu cần
-window.updateTransactionCounter = updateTransactionCounter;

@@ -17,11 +17,8 @@
           <h2>Tổng quan số dư</h2>
           <p id="totalBalance" class="balance-amount">0</p>
         </header>
-
-        <section class="notifications-section">
-          <h3>Thông báo <span id="transaction-count" class="badge">0</span></h3>
-          <ul id="notificationList" class="notification-list"></ul>
-        </section>
+        <h3>Giao dịch</h3>
+        <ul id="notificationList" class="notification-list"></ul>
       </aside>
 
       <main id="main-content">
@@ -128,7 +125,11 @@
             <h3><i class="fas fa-chart-pie"></i> Chi tiêu theo danh mục</h3>
             <div id="categoryChartContainer">
               <canvas id="categoryChart"></canvas>
-              <p id="categoryChartEmpty" class="empty-message" style="display: none;">
+              <p
+                id="categoryChartEmpty"
+                class="empty-message"
+                style="display: none"
+              >
                 Chưa có dữ liệu chi tiêu để hiển thị
               </p>
             </div>
@@ -137,7 +138,11 @@
             <h3><i class="fas fa-chart-bar"></i> Thu/Chi theo tháng</h3>
             <div id="monthlyChartContainer">
               <canvas id="monthlyChart"></canvas>
-              <p id="monthlyChartEmpty" class="empty-message" style="display: none;">
+              <p
+                id="monthlyChartEmpty"
+                class="empty-message"
+                style="display: none"
+              >
                 Chưa có dữ liệu giao dịch để hiển thị
               </p>
             </div>
