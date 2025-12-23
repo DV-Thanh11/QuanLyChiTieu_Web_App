@@ -231,187 +231,114 @@ body {
 
 /* === 3. STYLING CHO FORM GIAO DỊCH (US02 - MODERN CARD STYLE) === */
 
-/* Khung thẻ chứa form */
+/* 1. KHUNG CARD  */
 .transaction-card {
-  background: #ffffff;
-  border-radius: 20px; /* Bo góc tròn hơn chút */
-  padding: 40px; /* Tăng khoảng cách lề trong cho thoáng */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-
-  /* SỬA ĐOẠN NÀY ĐỂ TO HƠN */
-  max-width: 900px; /* Tăng từ 600px lên 900px (hoặc 100% nếu muốn full màn) */
-  width: 100%; /* Đảm bảo chiếm hết chỗ cho phép */
-  margin: 0 auto; /* Quan trọng: Lệnh này giúp căn giữa form ra giữa màn hình */
+  background-color: #ffffff;
+  padding: 40px;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  border-radius: 15px;
+  border: 2px solid #5eaadc;
 }
+
 .card-header h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
-  font-size: 1.3rem;
-  font-weight: 700;
   text-align: center;
-}
-
-/* Tabs chuyển đổi */
-.transaction-tabs {
-  display: flex;
-  background: #f5f7fa;
-  border-radius: 12px;
-  padding: 5px;
+  color: #2c3e50;
   margin-bottom: 25px;
 }
 
-.tab-btn {
-  flex: 1;
-  border: none;
-  background: transparent;
-  padding: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #7f8c8d;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-/* Tab Active (Mặc định là Chi tiêu) */
-.tab-btn.active {
-  background: #fff;
-  color: #e74c3c; /* Đỏ */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Khi bấm tab Thu nhập thì đổi màu xanh (JS sẽ xử lý thêm class nếu cần, hoặc dùng CSS cứng ở đây) */
-#income-tab.active {
-  color: #27ae60; /* Xanh lá */
-}
-
-/* Các nhóm Input */
-.form-group {
-  margin-bottom: 20px;
-}
-.form-group label {
-  display: block;
-  font-size: 0.9rem;
-  color: #555;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-
-/* Layout 2 cột */
-.form-row {
-  display: flex;
-  gap: 20px; /* Khoảng cách giữa 2 ô */
-  margin-bottom: 20px;
-}
-.half {
-  flex: 1;
-}
-
-/* Style chung cho Input */
-transaction-form input,
-.transaction-form select {
+/* 2. Ô NHẬP VÀ NÚT */
+.transaction-form input,
+.transaction-form select,
+.submit-btn {
   width: 100%;
-  padding: 18px 20px; /* Tăng độ dày ô nhập */
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  font-size: 1.1rem; /* Chữ to hơn (mặc định khoảng 1rem) */
-  background: #fafafa;
-  transition: border 0.3s, background 0.3s;
-  outline: none;
+  height: 50px;
+  padding: 0 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
   box-sizing: border-box;
+  border: 1px solid #bdc3c7;
+  background-color: #ecf0f1;
+  color: #333;
+  font-size: 17px;
 }
 
 .transaction-form input:focus,
 .transaction-form select:focus {
   border-color: #3498db;
-  background: #fff;
+  background-color: #ffffff;
 }
 
-/* Style riêng cho ô nhập tiền (Nổi bật nhất) */
-.money-group input {
-  font-size: 1.6rem;
-  font-weight: bold;
-  color: #2c3e50;
-  padding-right: 60px; /* Chỗ cho chữ VNĐ */
+/* 3. NÚT CHUYỂN TAB */
+.transaction-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  gap: 10px;
 }
 
-.input-with-icon {
-  position: relative;
-}
-
-.currency-label {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-weight: bold;
-  color: #95a5a6;
-}
-
-/* Nút Submit */
-submit-btn {
-  width: 100%;
-  padding: 18px; /* Nút bấm dày hơn */
+.tab-btn {
+  flex: 1;
+  padding: 12px;
   border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #ecf0f1;
+  color: #7f8c8d;
+  font-weight: bold;
+}
+
+/* Tab đang chọn (Active */
+.tab-btn.active {
+  background-color: #3498db;
+  color: #ffffff;
+}
+
+/*nút chi tiêu */
+#expense-tab.active {
+  background-color: #e74c3c; /* Màu Đỏ cam */
+}
+
+/* 4. CHIA CỘT  */
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.half {
+  flex: 1;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* 5. TIỀN TỆ */
+.currency-label {
+  display: block;
+  text-align: right;
+  color: #7f8c8d;
+  font-weight: bold;
+  margin-top: -10px;
+  margin-bottom: 15px;
+}
+
+/* 6. NÚT LƯU */
+.submit-btn {
+  background-color: #27ae60;
   color: white;
-  font-size: 1.3rem; /* Chữ trên nút to rõ */
+  border: none;
   font-weight: bold;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  margin-top: 20px;
+  text-transform: uppercase;
 }
 
 .submit-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+  background-color: #2ecc71;
 }
-
-/* Class hỗ trợ đổi màu khi sang Thu nhập (dùng trong JS) */
-body.mode-income .submit-btn {
-  background: linear-gradient(135deg, #2ecc71, #27ae60); /* Gradient Xanh */
-  box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
-}
-
-body.mode-income .tab-btn.active {
-  color: #27ae60;
-}
-/* === CHỈNH SỬA ĐỒNG BỘ KÍCH THƯỚC (TO BẰNG NHAU) === */
-
-/* 1. Ép tất cả các ô (Tiền, Danh mục, Ngày, Ghi chú) và Nút bấm cao bằng nhau */
-.transaction-form input,
-.transaction-form select,
-.submit-btn {
-  height: 55px !important; /* Chiều cao cố định là 55px */
-  font-size: 1.1rem !important; /* Cỡ chữ to đều 1.1rem */
-  padding: 0 15px !important; /* Khoảng cách lề trong */
-  border-radius: 10px;
-  width: 100%;
-  box-sizing: border-box; /* Quan trọng: Giữ khung không bị phình to */
-}
-
-/* 2. Riêng ô SỐ TIỀN: Cho chữ to đậm hơn xíu để dễ nhìn (nhưng khung vẫn cao 55px) */
-#transactionAmount {
-  font-size: 1.4rem !important;
-  font-weight: bold;
-}
-
-/* 3. Riêng NÚT BẤM: Căn giữa chữ và chỉnh lại màu sắc */
-.submit-btn {
-  margin-top: 25px; /* Cách xa ô ghi chú một chút cho thoáng */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-transform: uppercase; /* Chữ in hoa cho mạnh mẽ */
-  letter-spacing: 1px;
-}
-
 /* === 4. PHẦN TỔNG QUAN SỐ LIỆU (US03) === */
 .stats-overview {
   display: flex;
